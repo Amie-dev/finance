@@ -135,3 +135,4 @@ describe('SmartMoney AI Finance Agent & Tool Registry', () => {
     expect(coffeeTxn?.amount_minor).toBe(45000);
   });
 });
+

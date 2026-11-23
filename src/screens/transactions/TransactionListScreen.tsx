@@ -23,9 +23,11 @@ import { AccountRepository } from '@/db/repositories/accountRepository';
 import { CategoryRepository } from '@/db/repositories/categoryRepository';
 import { AccountWithBalance, Category, TransactionType } from '@/db/types';
 import { AddTransactionModal } from '@/components/transactions/AddTransactionModal';
+import { ReceiptScannerModal } from '@/components/receipts/ReceiptScannerModal';
+import { ImportReviewModal } from '@/screens/import/ImportReviewModal';
 import { SemanticSearchService, SemanticSearchResult } from '@/services/semanticSearchService';
 import { EmbeddingQueueWorker } from '@/services/embeddingQueueWorker';
-import { Search, Plus, Trash2, ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react-native';
+import { Search, Plus, Trash2, ArrowUpRight, ArrowDownRight, Sparkles, Scan, FileText } from 'lucide-react-native';
 
 export const TransactionListScreen: React.FC = () => {
   const { colors, typography, spacing, borderRadius } = useTheme();
@@ -42,8 +44,10 @@ export const TransactionListScreen: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
-  // Modal
+  // Modals
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -133,13 +137,29 @@ export const TransactionListScreen: React.FC = () => {
         title="Ledger"
         subtitle={`${transactions.length} Records`}
         rightAction={
-          <Button
-            title=""
-            icon={<Plus size={20} color={colors.text} />}
-            variant="ghost"
-            onPress={() => setShowAddModal(true)}
-            size="sm"
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Button
+              title=""
+              icon={<Scan size={18} color={colors.text} />}
+              variant="ghost"
+              onPress={() => setShowReceiptModal(true)}
+              size="sm"
+            />
+            <Button
+              title=""
+              icon={<FileText size={18} color={colors.text} />}
+              variant="ghost"
+              onPress={() => setShowImportModal(true)}
+              size="sm"
+            />
+            <Button
+              title=""
+              icon={<Plus size={20} color={colors.text} />}
+              variant="ghost"
+              onPress={() => setShowAddModal(true)}
+              size="sm"
+            />
+          </View>
         }
       />
 
@@ -383,6 +403,22 @@ export const TransactionListScreen: React.FC = () => {
         categories={categories}
         onSubmitTransaction={handleAddTransaction}
         onSubmitTransfer={handleAddTransfer}
+      />
+
+      <ReceiptScannerModal
+        visible={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        accounts={accounts}
+        categories={categories}
+        onSaveTransaction={handleAddTransaction}
+      />
+
+      <ImportReviewModal
+        visible={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        accounts={accounts}
+        categories={categories}
+        onImportComplete={loadTransactions}
       />
     </ScreenWrapper>
   );

@@ -23,6 +23,7 @@ import { CategoryRepository } from '@/db/repositories/categoryRepository';
 import { AccountWithBalance, Category } from '@/db/types';
 import { AddTransactionModal } from '@/components/transactions/AddTransactionModal';
 import { AddAccountModal } from '@/components/accounts/AddAccountModal';
+import { ReceiptScannerModal } from '@/components/receipts/ReceiptScannerModal';
 import { useAppLock } from '@/security/AppLockProvider';
 import {
   Eye,
@@ -35,6 +36,7 @@ import {
   Wallet,
   Calendar,
   AlertCircle,
+  Scan,
 } from 'lucide-react-native';
 
 interface DashboardScreenProps {
@@ -61,6 +63,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
   // Modals
   const [showAddTxnModal, setShowAddTxnModal] = useState(false);
   const [showAddAccModal, setShowAddAccModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -237,13 +240,23 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
                 title="Add Entry"
                 icon={<Plus size={16} color={colors.textInverse} />}
                 onPress={() => setShowAddTxnModal(true)}
-                style={{ flex: 1, marginRight: spacing.sm }}
+                style={{ flex: 1, marginRight: 6 }}
+                size="sm"
+              />
+              <Button
+                title="Scan Bill"
+                icon={<Scan size={16} color={colors.text} />}
+                variant="secondary"
+                onPress={() => setShowReceiptModal(true)}
+                style={{ flex: 1, marginRight: 6 }}
+                size="sm"
               />
               <Button
                 title="+ Account"
                 variant="secondary"
                 onPress={() => setShowAddAccModal(true)}
                 style={{ flex: 1 }}
+                size="sm"
               />
             </>
           )}
@@ -365,6 +378,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
         visible={showAddAccModal}
         onClose={() => setShowAddAccModal(false)}
         onSubmit={handleAddAccount}
+      />
+
+      {/* Receipt Scanner Modal */}
+      <ReceiptScannerModal
+        visible={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        accounts={accounts}
+        categories={categories}
+        onSaveTransaction={handleAddTransaction}
       />
     </ScreenWrapper>
   );

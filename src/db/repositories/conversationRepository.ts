@@ -97,3 +97,4 @@ export const ConversationRepository = {
     await client.executeMutation(`DELETE FROM ai_messages WHERE conversation_id = ?;`, [conversationId]);
   },
 };
+

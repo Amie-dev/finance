@@ -47,3 +47,4 @@ export interface LLMClient {
   name: string;
   chat(messages: ChatMessage[], tools?: ToolDefinition[]): Promise<LLMResponse>;
 }
+
