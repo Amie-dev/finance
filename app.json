@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "SmartMoney",
+    "slug": "smartmoney",
+    "scheme": "smartmoney",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.smartmoney.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "SmartMoney uses Face ID to securely authenticate and protect your private financial data."
+      }
+    },
+    "android": {
+      "package": "com.smartmoney.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#090D16",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow SmartMoney to use Face ID to protect your financial ledger."
+        }
+      ]
+    ]
+  }
+}
