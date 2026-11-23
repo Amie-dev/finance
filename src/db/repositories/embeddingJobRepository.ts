@@ -64,3 +64,4 @@ export const EmbeddingJobRepository = {
     return rows[0]?.count || 0;
   },
 };
+

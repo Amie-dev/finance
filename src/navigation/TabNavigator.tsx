@@ -6,21 +6,22 @@ import { DashboardScreen } from '@/screens/dashboard/DashboardScreen';
 import { AccountListScreen } from '@/screens/accounts/AccountListScreen';
 import { TransactionListScreen } from '@/screens/transactions/TransactionListScreen';
 import { BudgetListScreen } from '@/screens/budgets/BudgetListScreen';
+import { ChatScreen } from '@/screens/chat/ChatScreen';
 import { AnalyticsScreen } from '@/screens/analytics/AnalyticsScreen';
 import {
   LayoutDashboard,
-  Landmark,
   Receipt,
+  Sparkles,
   Target,
-  PieChart,
+  Landmark,
 } from 'lucide-react-native';
 
 export type RootTabParamList = {
   Dashboard: undefined;
-  Accounts: undefined;
   Transactions: undefined;
+  Assistant: undefined;
   Budgets: undefined;
-  Analytics: undefined;
+  Accounts: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -58,19 +59,19 @@ export const RootNavigator: React.FC = () => {
           }}
         />
         <Tab.Screen
-          name="Accounts"
-          component={AccountListScreen}
-          options={{
-            tabBarLabel: 'Accounts',
-            tabBarIcon: ({ color, size }) => <Landmark size={size} color={color} />,
-          }}
-        />
-        <Tab.Screen
           name="Transactions"
           component={TransactionListScreen}
           options={{
             tabBarLabel: 'Ledger',
             tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
+          }}
+        />
+        <Tab.Screen
+          name="Assistant"
+          component={ChatScreen}
+          options={{
+            tabBarLabel: 'Assistant',
+            tabBarIcon: ({ color, size }) => <Sparkles size={size} color={color} />,
           }}
         />
         <Tab.Screen
@@ -82,15 +83,14 @@ export const RootNavigator: React.FC = () => {
           }}
         />
         <Tab.Screen
-          name="Analytics"
-          component={AnalyticsScreen}
+          name="Accounts"
+          component={AccountListScreen}
           options={{
-            tabBarLabel: 'Analytics',
-            tabBarIcon: ({ color, size }) => <PieChart size={size} color={color} />,
+            tabBarLabel: 'Accounts',
+            tabBarIcon: ({ color, size }) => <Landmark size={size} color={color} />,
           }}
         />
       </Tab.Navigator>
     </NavigationContainer>
   );
 };
-

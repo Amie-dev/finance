@@ -15,3 +15,4 @@ export const migration002: Migration = {
     `CREATE INDEX IF NOT EXISTS idx_vec_txn ON local_vec_transactions(transaction_id);`
   ],
 };
+

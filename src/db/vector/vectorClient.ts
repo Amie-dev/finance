@@ -82,3 +82,4 @@ export const VectorClient = {
     return scored.slice(0, limit);
   },
 };
+

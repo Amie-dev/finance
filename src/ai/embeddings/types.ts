@@ -17,3 +17,4 @@ export interface EmbeddingJobWithTxn {
   amount_minor: number;
   transaction_date: string;
 }
+

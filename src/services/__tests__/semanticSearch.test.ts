@@ -153,3 +153,4 @@ describe('SmartMoney Vector RAG Pipeline & Semantic Search', () => {
     expect(taxiResults[0].merchant).toBe('Uber');
   });
 });
+

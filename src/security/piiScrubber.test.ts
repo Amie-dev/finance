@@ -62,3 +62,4 @@ describe('SmartMoney Local PII Scrubber', () => {
     expect(result.redactedTypes).toContain('UPI');
   });
 });
+
