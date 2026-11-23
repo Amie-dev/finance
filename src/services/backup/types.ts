@@ -29,3 +29,4 @@ export interface EncryptedBackupArchive {
   ciphertextBase64: string;
   createdAt: string;
 }
+

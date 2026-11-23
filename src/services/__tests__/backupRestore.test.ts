@@ -167,3 +167,4 @@ describe('SmartMoney AES-256-GCM Encrypted Backup & Restore', () => {
     expect(walletRestored.current_balance).toBe(150000);
   });
 });
+
