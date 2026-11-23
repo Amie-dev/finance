@@ -93,3 +93,4 @@ export const RootNavigator: React.FC = () => {
     </NavigationContainer>
   );
 };
+

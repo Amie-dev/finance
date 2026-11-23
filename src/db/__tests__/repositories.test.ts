@@ -239,3 +239,4 @@ describe('SmartMoney Core Ledger Repositories', () => {
     expect(budgets[0].is_exceeded).toBe(true);
   });
 });
+

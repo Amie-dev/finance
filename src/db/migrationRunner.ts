@@ -1,5 +1,6 @@
 import { DatabaseClient } from './types';
 import { migration001 } from './migrations/001_initial_schema';
+import { migration002 } from './migrations/002_vector_tables';
 
 export interface Migration {
   version: number;
@@ -7,7 +8,7 @@ export interface Migration {
   up: string[];
 }
 
-const ALL_MIGRATIONS: Migration[] = [migration001];
+const ALL_MIGRATIONS: Migration[] = [migration001, migration002];
 
 export async function runMigrations(client: DatabaseClient): Promise<void> {
   // Ensure migration tracking table exists

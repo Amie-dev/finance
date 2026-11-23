@@ -53,3 +53,4 @@ export const TransferRepository = {
     await client.executeMutation(`DELETE FROM transfers WHERE id = ?;`, [id]);
   },
 };
+

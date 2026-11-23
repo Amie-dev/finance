@@ -93,3 +93,4 @@ export const BudgetRepository = {
     await client.executeMutation(`DELETE FROM budgets WHERE id = ?;`, [id]);
   },
 };
+

@@ -23,18 +23,22 @@ import { AccountRepository } from '@/db/repositories/accountRepository';
 import { CategoryRepository } from '@/db/repositories/categoryRepository';
 import { AccountWithBalance, Category, TransactionType } from '@/db/types';
 import { AddTransactionModal } from '@/components/transactions/AddTransactionModal';
-import { Search, Plus, Trash2, ArrowUpRight, ArrowDownRight } from 'lucide-react-native';
+import { SemanticSearchService, SemanticSearchResult } from '@/services/semanticSearchService';
+import { EmbeddingQueueWorker } from '@/services/embeddingQueueWorker';
+import { Search, Plus, Trash2, ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react-native';
 
 export const TransactionListScreen: React.FC = () => {
   const { colors, typography, spacing, borderRadius } = useTheme();
 
   const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
+  const [semanticResults, setSemanticResults] = useState<SemanticSearchResult[]>([]);
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filters
+  // Filters & AI Search Mode
   const [search, setSearch] = useState('');
+  const [isAiSearch, setIsAiSearch] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'all' | 'expense' | 'income'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
@@ -44,24 +48,35 @@ export const TransactionListScreen: React.FC = () => {
   const loadTransactions = useCallback(async () => {
     try {
       const client = await getDatabaseClient();
-      const [txns, accs, cats] = await Promise.all([
-        TransactionRepository.getFiltered(client, {
-          search: search.trim() || undefined,
-          type: typeFilter === 'all' ? undefined : typeFilter,
-          category_id: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
-          limit: 100,
-        }),
-        AccountRepository.getAllWithBalances(client),
-        CategoryRepository.getAll(client),
-      ]);
 
-      setTransactions(txns);
-      setAccounts(accs);
-      setCategories(cats);
+      // Trigger background embedding processing
+      EmbeddingQueueWorker.processQueue(client).catch(() => {});
+
+      if (isAiSearch && search.trim().length > 1) {
+        const results = await SemanticSearchService.search(client, search.trim(), {
+          minSimilarity: 0.15,
+        });
+        setSemanticResults(results);
+      } else {
+        const [txns, accs, cats] = await Promise.all([
+          TransactionRepository.getFiltered(client, {
+            search: search.trim() || undefined,
+            type: typeFilter === 'all' ? undefined : typeFilter,
+            category_id: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
+            limit: 100,
+          }),
+          AccountRepository.getAllWithBalances(client),
+          CategoryRepository.getAll(client),
+        ]);
+
+        setTransactions(txns);
+        setAccounts(accs);
+        setCategories(cats);
+      }
     } catch (err) {
       console.error('[TransactionListScreen] Error loading transactions:', err);
     }
-  }, [search, typeFilter, selectedCategoryId]);
+  }, [search, isAiSearch, typeFilter, selectedCategoryId]);
 
   useEffect(() => {
     loadTransactions();
@@ -79,6 +94,8 @@ export const TransactionListScreen: React.FC = () => {
       ...data,
       id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     });
+    // Trigger embedding queue worker
+    EmbeddingQueueWorker.processQueue(client).catch(() => {});
     await loadTransactions();
   };
 
@@ -127,142 +144,235 @@ export const TransactionListScreen: React.FC = () => {
       />
 
       <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm }}>
-        {/* Search Bar */}
+        {/* Search Bar with AI Toggle */}
         <View
           style={[
             styles.searchBar,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
+              borderColor: isAiSearch ? colors.primary : colors.border,
               borderRadius: borderRadius.md,
               paddingHorizontal: spacing.md,
             },
           ]}
         >
-          <Search size={18} color={colors.textSecondary} />
+          <Search size={18} color={isAiSearch ? colors.primary : colors.textSecondary} />
           <TextInput
-            placeholder="Search merchant or notes..."
+            placeholder={
+              isAiSearch
+                ? 'AI Search: describe in plain English...'
+                : 'Search merchant or notes...'
+            }
             placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
             style={[styles.searchInput, { color: colors.text, fontSize: typography.sizes.sm }]}
           />
-        </View>
-
-        {/* Type Filter Tabs */}
-        <View style={styles.filterRow}>
           <TouchableOpacity
-            onPress={() => setTypeFilter('all')}
+            onPress={() => setIsAiSearch(!isAiSearch)}
             style={[
-              styles.typeTab,
+              styles.aiPill,
               {
-                backgroundColor: typeFilter === 'all' ? colors.primary : colors.surface,
-                borderRadius: borderRadius.full,
+                backgroundColor: isAiSearch ? colors.primary : colors.surfaceHover,
+                borderRadius: borderRadius.sm,
               },
             ]}
           >
-            <Text style={{ color: typeFilter === 'all' ? colors.textInverse : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-              All
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setTypeFilter('expense')}
-            style={[
-              styles.typeTab,
-              {
-                backgroundColor: typeFilter === 'expense' ? colors.expense : colors.surface,
-                borderRadius: borderRadius.full,
-              },
-            ]}
-          >
-            <Text style={{ color: typeFilter === 'expense' ? '#FFFFFF' : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-              Expenses
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setTypeFilter('income')}
-            style={[
-              styles.typeTab,
-              {
-                backgroundColor: typeFilter === 'income' ? colors.income : colors.surface,
-                borderRadius: borderRadius.full,
-              },
-            ]}
-          >
-            <Text style={{ color: typeFilter === 'income' ? '#FFFFFF' : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-              Income
+            <Sparkles size={14} color={isAiSearch ? colors.textInverse : colors.primary} />
+            <Text
+              style={{
+                color: isAiSearch ? colors.textInverse : colors.primary,
+                fontSize: 11,
+                fontWeight: '700',
+                marginLeft: 4,
+              }}
+            >
+              AI
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Type Filter Tabs (Only shown in standard mode) */}
+        {!isAiSearch && (
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              onPress={() => setTypeFilter('all')}
+              style={[
+                styles.typeTab,
+                {
+                  backgroundColor: typeFilter === 'all' ? colors.primary : colors.surface,
+                  borderRadius: borderRadius.full,
+                },
+              ]}
+            >
+              <Text style={{ color: typeFilter === 'all' ? colors.textInverse : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                All
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setTypeFilter('expense')}
+              style={[
+                styles.typeTab,
+                {
+                  backgroundColor: typeFilter === 'expense' ? colors.expense : colors.surface,
+                  borderRadius: borderRadius.full,
+                },
+              ]}
+            >
+              <Text style={{ color: typeFilter === 'expense' ? '#FFFFFF' : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                Expenses
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setTypeFilter('income')}
+              style={[
+                styles.typeTab,
+                {
+                  backgroundColor: typeFilter === 'income' ? colors.income : colors.surface,
+                  borderRadius: borderRadius.full,
+                },
+              ]}
+            >
+              <Text style={{ color: typeFilter === 'income' ? '#FFFFFF' : colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
+                Income
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <ScrollView
         contentContainerStyle={[styles.content, { padding: spacing.lg }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
-        {transactions.length === 0 ? (
-          <View style={[styles.emptyContainer, { paddingVertical: spacing['3xl'] }]}>
-            <Text style={{ color: colors.textMuted, fontSize: typography.sizes.base }}>
-              No matching transactions found.
-            </Text>
-          </View>
-        ) : (
-          transactions.map((tx) => (
-            <Card key={tx.id} style={{ marginBottom: spacing.sm }}>
-              <View style={styles.txnItem}>
-                <View
-                  style={[
-                    styles.iconCircle,
-                    {
-                      backgroundColor: tx.type === 'income' ? colors.incomeLight : colors.expenseLight,
-                      borderRadius: borderRadius.full,
-                    },
-                  ]}
-                >
-                  {tx.type === 'income' ? (
-                    <ArrowUpRight size={18} color={colors.income} />
-                  ) : (
-                    <ArrowDownRight size={18} color={colors.expense} />
-                  )}
-                </View>
+        {isAiSearch ? (
+          semanticResults.length === 0 ? (
+            <View style={[styles.emptyContainer, { paddingVertical: spacing['3xl'] }]}>
+              <Sparkles size={36} color={colors.primary} />
+              <Text style={{ color: colors.textSecondary, fontSize: typography.sizes.base, marginTop: spacing.md, textAlign: 'center' }}>
+                {search.trim().length > 1
+                  ? 'No semantic matches found for this query.'
+                  : 'Type a question or description to search transactions using local vector RAG.'}
+              </Text>
+            </View>
+          ) : (
+            semanticResults.map((tx) => (
+              <Card key={tx.id} style={{ marginBottom: spacing.sm }}>
+                <View style={styles.txnItem}>
+                  <View
+                    style={[
+                      styles.iconCircle,
+                      {
+                        backgroundColor: tx.type === 'income' ? colors.incomeLight : colors.expenseLight,
+                        borderRadius: borderRadius.full,
+                      },
+                    ]}
+                  >
+                    <Sparkles size={16} color={colors.primary} />
+                  </View>
 
-                <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
-                  <Text style={{ color: colors.text, fontSize: typography.sizes.base, fontWeight: '600' }}>
-                    {tx.merchant || tx.category_name}
-                  </Text>
-                  <Text style={{ color: colors.textMuted, fontSize: typography.sizes.xs, marginTop: 2 }}>
-                    {tx.category_name} • {tx.account_name} • {tx.transaction_date}
-                  </Text>
-                  {tx.raw_note ? (
-                    <Text style={{ color: colors.textSecondary, fontSize: typography.sizes.xs, marginTop: 2 }}>
-                      {tx.raw_note}
+                  <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ color: colors.text, fontSize: typography.sizes.base, fontWeight: '600' }}>
+                        {tx.merchant || tx.category_name}
+                      </Text>
+                      <Badge
+                        label={`${Math.round(tx.similarity * 100)}% Match`}
+                        variant="income"
+                        size="sm"
+                        style={{ marginLeft: 6 }}
+                      />
+                    </View>
+                    <Text style={{ color: colors.textMuted, fontSize: typography.sizes.xs, marginTop: 2 }}>
+                      {tx.category_name} • {tx.account_name} • {tx.transaction_date}
                     </Text>
-                  ) : null}
-                </View>
+                    {tx.scrubbed_note || tx.raw_note ? (
+                      <Text style={{ color: colors.textSecondary, fontSize: typography.sizes.xs, marginTop: 2 }}>
+                        {tx.scrubbed_note || tx.raw_note}
+                      </Text>
+                    ) : null}
+                  </View>
 
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text
-                    style={{
-                      color: tx.type === 'income' ? colors.income : colors.expense,
-                      fontWeight: '700',
-                      fontSize: typography.sizes.base,
-                    }}
-                  >
-                    {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount_minor)}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => handleDeleteTransaction(tx)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={{ marginTop: 6 }}
-                  >
-                    <Trash2 size={16} color={colors.textMuted} />
-                  </TouchableOpacity>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        color: tx.type === 'income' ? colors.income : colors.expense,
+                        fontWeight: '700',
+                        fontSize: typography.sizes.base,
+                      }}
+                    >
+                      {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount_minor)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </Card>
-          ))
+              </Card>
+            ))
+          )
+        ) : (
+          transactions.length === 0 ? (
+            <View style={[styles.emptyContainer, { paddingVertical: spacing['3xl'] }]}>
+              <Text style={{ color: colors.textMuted, fontSize: typography.sizes.base }}>
+                No matching transactions found.
+              </Text>
+            </View>
+          ) : (
+            transactions.map((tx) => (
+              <Card key={tx.id} style={{ marginBottom: spacing.sm }}>
+                <View style={styles.txnItem}>
+                  <View
+                    style={[
+                      styles.iconCircle,
+                      {
+                        backgroundColor: tx.type === 'income' ? colors.incomeLight : colors.expenseLight,
+                        borderRadius: borderRadius.full,
+                      },
+                    ]}
+                  >
+                    {tx.type === 'income' ? (
+                      <ArrowUpRight size={18} color={colors.income} />
+                    ) : (
+                      <ArrowDownRight size={18} color={colors.expense} />
+                    )}
+                  </View>
+
+                  <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+                    <Text style={{ color: colors.text, fontSize: typography.sizes.base, fontWeight: '600' }}>
+                      {tx.merchant || tx.category_name}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: typography.sizes.xs, marginTop: 2 }}>
+                      {tx.category_name} • {tx.account_name} • {tx.transaction_date}
+                    </Text>
+                    {tx.raw_note ? (
+                      <Text style={{ color: colors.textSecondary, fontSize: typography.sizes.xs, marginTop: 2 }}>
+                        {tx.raw_note}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text
+                      style={{
+                        color: tx.type === 'income' ? colors.income : colors.expense,
+                        fontWeight: '700',
+                        fontSize: typography.sizes.base,
+                      }}
+                    >
+                      {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount_minor)}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteTransaction(tx)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{ marginTop: 6 }}
+                    >
+                      <Trash2 size={16} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Card>
+            ))
+          )
         )}
       </ScrollView>
 
@@ -293,6 +403,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
   },
+  aiPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 6,
+  },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
@@ -317,3 +434,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
