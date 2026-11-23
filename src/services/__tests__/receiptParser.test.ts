@@ -62,3 +62,4 @@ NET PAYABLE: 340.00
     expect(parsed.category_hint).toBe('cat_health');
   });
 });
+

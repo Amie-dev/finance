@@ -39,7 +39,8 @@
         {
           "faceIDPermission": "Allow SmartMoney to use Face ID to protect your financial ledger."
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }

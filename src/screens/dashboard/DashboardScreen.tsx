@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { useTheme } from '@/theme';
 import { ScreenWrapper } from '@/components/common/ScreenWrapper';
@@ -24,6 +25,7 @@ import { AccountWithBalance, Category } from '@/db/types';
 import { AddTransactionModal } from '@/components/transactions/AddTransactionModal';
 import { AddAccountModal } from '@/components/accounts/AddAccountModal';
 import { ReceiptScannerModal } from '@/components/receipts/ReceiptScannerModal';
+import { BackupRestoreScreen } from '@/screens/settings/BackupRestoreScreen';
 import { useAppLock } from '@/security/AppLockProvider';
 import {
   Eye,
@@ -37,6 +39,8 @@ import {
   Calendar,
   AlertCircle,
   Scan,
+  Settings,
+  X,
 } from 'lucide-react-native';
 
 interface DashboardScreenProps {
@@ -64,6 +68,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
   const [showAddTxnModal, setShowAddTxnModal] = useState(false);
   const [showAddAccModal, setShowAddAccModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -137,6 +142,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
       <Header
         title="SmartMoney"
         subtitle="Financial Overview"
+        leftAction={
+          <Button
+            title=""
+            icon={<Settings size={18} color={colors.text} />}
+            variant="ghost"
+            onPress={() => setShowSettingsModal(true)}
+            size="sm"
+          />
+        }
         rightAction={
           <Button
             title=""
@@ -388,6 +402,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigateToTa
         categories={categories}
         onSaveTransaction={handleAddTransaction}
       />
+
+      {/* Settings & Encrypted Backup Modal */}
+      <Modal visible={showSettingsModal} animationType="slide" onRequestClose={() => setShowSettingsModal(false)}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={{ position: 'absolute', top: 54, right: 16, zIndex: 99 }}>
+            <TouchableOpacity
+              onPress={() => setShowSettingsModal(false)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <X size={22} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          <BackupRestoreScreen />
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 };
