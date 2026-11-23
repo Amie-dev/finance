@@ -57,3 +57,4 @@ describe('SmartMoney Money Utility', () => {
     expect(calculateProgressPercentage(0, 100000)).toBe(0);
   });
 });
+

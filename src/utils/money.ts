@@ -75,3 +75,4 @@ export function calculateProgressPercentage(spentMinor: number, limitMinor: numb
   if (limitMinor <= 0) return 0;
   return Math.min(Math.round((spentMinor / limitMinor) * 100), 100);
 }
+

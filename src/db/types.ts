@@ -112,3 +112,4 @@ export interface DatabaseClient {
   executeMutation(sql: string, params?: any[]): Promise<{ rowsAffected: number; insertId?: number }>;
   transaction<T>(callback: (client: DatabaseClient) => Promise<T>): Promise<T>;
 }
+

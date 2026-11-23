@@ -141,3 +141,4 @@ export const migration001 = {
       ('cat_other_income', 'Other Income', 'income', 'dollar-sign', '#64748B', 1, 0);`
   ],
 };
+

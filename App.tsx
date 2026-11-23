@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from '@/theme';
 import { AppLockProvider, useAppLock } from '@/security/AppLockProvider';
 import { AuthLockScreen } from '@/screens/AuthLockScreen';
-import { HomeScreen } from '@/screens/HomeScreen';
+import { RootNavigator } from '@/navigation/TabNavigator';
 import { getDatabaseClient } from '@/db/client';
 
 function AppContent() {
@@ -19,7 +19,7 @@ function AppContent() {
         setIsDbReady(true);
       } catch (err) {
         console.error('[App] Failed to initialize DB:', err);
-        setIsDbReady(true); // Allow screen to show error state
+        setIsDbReady(true);
       }
     }
     init();
@@ -35,7 +35,7 @@ function AppContent() {
 
   return (
     <>
-      <HomeScreen />
+      <RootNavigator />
       {isLocked && (
         <AuthLockScreen biometricLabel={biometricLabel} onUnlock={unlockApp} />
       )}

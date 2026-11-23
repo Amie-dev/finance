@@ -53,3 +53,4 @@ export async function authenticateWithBiometrics(
     return { success: false, error: err?.message || 'Biometric authentication error' };
   }
 }
+

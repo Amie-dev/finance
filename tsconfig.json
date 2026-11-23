@@ -5,16 +5,18 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "ignoreDeprecations": "6.0",
-    "types": ["bun-types"],
+    "types": [
+      "bun-types"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "**/*.tsx"
   ]
 }

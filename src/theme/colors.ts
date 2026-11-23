@@ -105,3 +105,4 @@ export const lightPalette: ColorPalette = {
   overlay: 'rgba(15, 23, 42, 0.6)',
   cardHighlight: 'rgba(5, 150, 105, 0.06)',
 };
+

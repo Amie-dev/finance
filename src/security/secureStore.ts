@@ -33,3 +33,4 @@ export async function deleteSecureItem(key: string): Promise<void> {
     console.error(`[SecureStore] Error deleting key "${key}":`, error);
   }
 }
+

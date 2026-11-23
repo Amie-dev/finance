@@ -67,3 +67,4 @@ export async function getDatabaseClient(): Promise<DatabaseClient> {
     isInitializing = false;
   }
 }
+

@@ -105,3 +105,4 @@ export const useAppLock = (): AppLockContextValue => {
   }
   return context;
 };
+
